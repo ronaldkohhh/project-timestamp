@@ -14,40 +14,41 @@ app.use(cors({ optionsSuccessStatus: 200 }));  // some legacy browsers choke on 
 app.use(express.static('public'));
 
 // http://expressjs.com/en/starter/basic-routing.html
-app.get("/", function(req, res) {
+app.get("/", function (req, res) {
   res.sendFile(__dirname + '/views/index.html');
 });
 
 
 // your first API endpoint... 
-app.get("/api/hello", function(req, res) {
+app.get("/api/hello", function (req, res) {
   res.json({ greeting: 'hello API' });
 });
 
+function jsonReturnFactory(date) {
+  return {
+    unix: date.getTime(),
+    utc: date.toUTCString()
+  }
+}
 
+app.get("/api/:date?", function (req, res) {
+  let date = !isNaN(req.params.date)
+    ? new Date(Number(req.params.date))
+    : new Date(req.params.date);
 
-// listen for requests :)
-var listener = app.listen(process.env.PORT, function() {
-  console.log('Your app is listening on port ' + listener.address().port);
+  if (!req.params.date) {
+    date = new Date()
+  }
+
+  if (isNaN(date.getTime())) {
+    res.json({ error: "Invalid Date" });
+    return;
+  }
+
+  res.json(jsonReturnFactory(date));
 });
 
-app.get("/api/timestamp/:date_string", (req, res) => {
-  let dateString = req.params.date_string;
-  let date;
-
-  if (!dateString) {
-    date = new Date();
-  } else {
-    if (!isNaN(dateString)) {
-      date = new Date(parseInt(dateString));
-    } else {
-      date = new Date(dateString);
-    }
-  }
-
-  if (date.toString() === 'Invalid Date') {
-    res.json({ error: date.toString() });
-  } else {
-    res.json({ unix: date.getTime(), utc: date.toUTCString() });
-  }
+// listen for requests :)
+var listener = app.listen(process.env.PORT, function () {
+  console.log('Your app is listening on port ' + listener.address().port);
 });
